@@ -368,6 +368,12 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   // 播放源开始/停止时的旁路回调。默认不注入，均为空操作。
   static Future<String?> Function(String hash, String quality)?
   resolveLocalAudioPath;
+  static Future<void> Function(Song song, String quality, String url)?
+  registerCachedPlayback;
+  static String? Function(String songId)? cachedAudioQuality;
+
+  static String _cachedAudioUri(String path) =>
+      path.startsWith('md3cache:') ? path : Uri.file(path).toString();
   static Future<String?> Function(String hash)? resolveLocalArtworkPath;
   static void Function(Song song, String quality, String url)?
   onPlaybackSourceStarted;
@@ -4188,8 +4194,12 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     }
     final request = playbackRequest ?? _issuePlaybackRequest();
     final apiClient = KugouApiClient();
+    final cachedAudio = await PlayerProvider.resolveLocalAudioPath?.call(
+      song.id, _audioQuality.value,
+    );
+    if (!_isPlaybackRequestCurrent(request)) return;
     // 先等凭证加载完成再判定登录态，避免启动窗口期误弹登录提示
-    if (!await apiClient.isLoggedInWhenReady()) {
+    if (cachedAudio == null && !await apiClient.isLoggedInWhenReady()) {
       // v28d：await 期间的顶替再起播会让本续延失效，直接 write 旧歌会覆盖
       // 持久化 playlist（_savePlaylistIfChanged 冷启动恢复错歌）——比对代次。
       if (!_isPlaybackRequestCurrent(request)) return;
@@ -4202,12 +4212,7 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     _resetAbnormalRetry();
 
     // 可选扩展：播放前解析本地已持久化的音频（默认关闭，由宿主注入）
-    String? cachedPath;
-    final localAudioResolver = PlayerProvider.resolveLocalAudioPath;
-    if (localAudioResolver != null) {
-      cachedPath = await localAudioResolver(song.id, _audioQuality.value);
-      if (!_isPlaybackRequestCurrent(request)) return;
-    }
+    final cachedPath = cachedAudio;
 
     _queueRevision++;
     _prefetchedUrlQuality.clear();
@@ -4226,8 +4231,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       // 缓存命中：直接用本地路径播放
       if (cachedPath != null) {
-        _actualPlayingQuality = _audioQuality.value;
-        final fileUri = Uri.file(cachedPath).toString();
+        _actualPlayingQuality = PlayerProvider.cachedAudioQuality?.call(song.id) ?? _audioQuality.value;
+        final fileUri = _cachedAudioUri(cachedPath);
         final resolvedSong = song.copyWith(url: fileUri);
         _currentSong = resolvedSong;
         _playlist = [resolvedSong];
@@ -4277,6 +4282,10 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
         _actualPlayingQuality = result.quality;
         _warnQualityDowngrade(_audioQuality.value, result.quality);
         final resolvedSong = song.copyWith(url: result.url);
+        await PlayerProvider.registerCachedPlayback?.call(
+          resolvedSong, result.quality, result.url,
+        );
+        if (!_isPlaybackRequestCurrent(request)) return;
         _currentSong = resolvedSong;
         _playlist = [resolvedSong];
         _isResolvingUrl = false;
@@ -4506,8 +4515,8 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
     try {
       // 缓存命中：直接播放本地文件
       if (cachedPath != null) {
-        _actualPlayingQuality = _audioQuality.value;
-        final fileUri = Uri.file(cachedPath).toString();
+        _actualPlayingQuality = PlayerProvider.cachedAudioQuality?.call(songs[startIndex].id) ?? _audioQuality.value;
+        final fileUri = _cachedAudioUri(cachedPath);
         final resolvedSong = _currentSong!.copyWith(url: fileUri);
         _currentSong = resolvedSong;
         _playlist[_currentIndex] = resolvedSong;
@@ -4987,6 +4996,12 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
   }) async {
     final request = playbackRequest ?? _issuePlaybackRequest();
     final song = _currentSong;
+    if (song != null && song.isOnline && !url.startsWith('md3cache:')) {
+      await PlayerProvider.registerCachedPlayback?.call(
+        song, _actualPlayingQuality ?? _audioQuality.value, url,
+      );
+      if (!_isPlaybackRequestCurrent(request)) return false;
+    }
     if (_audioService == null) {
       _logPlaybackEvent(
         'load.end',
@@ -5720,9 +5735,9 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
       }
       if (cachedPath != null) {
         // 命中本地已持久化音频，直接播放本地文件
-        _actualPlayingQuality = _audioQuality.value;
+        _actualPlayingQuality = PlayerProvider.cachedAudioQuality?.call(song.id) ?? _audioQuality.value;
         final loaded = await _setUrlAndPlay(
-          Uri.file(cachedPath).toString(),
+          _cachedAudioUri(cachedPath),
           seekTo: seekTo,
           playAfter: play,
           playbackRequest: request,
@@ -7617,7 +7632,16 @@ class PlayerProvider extends ChangeNotifier with WidgetsBindingObserver {
           ? null
           : Uri.file(cached).toString();
     }
-    if (song.isOnline) return song.url;
+    if (song.isOnline) {
+      final cached = await PlayerProvider.resolveLocalAudioPath?.call(song.id, _audioQuality.value);
+      if (cached != null) return _cachedAudioUri(cached);
+      if (song.url != null) {
+        await PlayerProvider.registerCachedPlayback?.call(
+          song, _actualPlayingQuality ?? _audioQuality.value, song.url!,
+        );
+      }
+      return song.url;
+    }
     final raw = song.localPath;
     if (raw == null || raw.isEmpty) return null;
     // 非 content:// 协议：直接当本地路径用（兼容旧的绝对路径/SMB 路径等）

@@ -42,8 +42,8 @@ class GithubReleaseClient implements ReleaseSource {
           );
 
   /// 检测目标（唯一来源；换仓库只改这两行）
-  static const String owner = 'zzyoxml';
-  static const String repo = 'md3Music';
+  static const String owner = 'TySchip';
+  static const String repo = 'md3Music-cache';
 
   /// GitHub 要求 User-Agent 非空，显式声明产品标识避免被拒。
   static const String userAgent = 'MD3Music';

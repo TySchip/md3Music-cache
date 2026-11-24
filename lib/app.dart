@@ -30,6 +30,7 @@ import 'core/remote/tv_key_repeat.dart';
 // tv: 播放页返回键兜底（焦点丢回路由 FocusScope 时页内拦截器收不到按键）。
 import 'core/remote/tv_player_back_focus.dart';
 import 'core/services/car_with_service.dart';
+import 'core/services/favorite_audio_cache.dart';
 import 'core/services/diagnostic_logger.dart';
 import 'core/services/external_media_intent_service.dart';
 import 'core/services/fm_widget_sync.dart';
@@ -325,6 +326,24 @@ class MyApp extends StatelessWidget {
           },
         ),
         ChangeNotifierProvider(create: (_) => FavoritesProvider()),
+        if (Platform.isAndroid)
+          ChangeNotifierProxyProvider<KugouProvider, FavoriteAudioCache>(
+            lazy: false,
+            create: (context) {
+              final cache = FavoriteAudioCache.android();
+              cache.listenToFavorites(context.read<FavoritesProvider>());
+              PlayerProvider.resolveLocalAudioPath = cache.resolveLocal;
+              PlayerProvider.registerCachedPlayback = cache.registerPlaying;
+              PlayerProvider.cachedAudioQuality = cache.cachedQuality;
+              KugouProvider.restoreLyric = cache.restoreLyric;
+              KugouProvider.storeLyric = cache.storeLyric;
+              return cache;
+            },
+            update: (_, kugou, cache) {
+              cache!.setAccount(kugou.userid);
+              return cache;
+            },
+          ),
         ChangeNotifierProvider(create: (_) => LocalFavoritesProvider()),
         // 跨页面广播「收藏的歌单」变更（详情页 → 我的收藏 tab 立即刷新）
         ChangeNotifierProvider(create: (_) => PlaylistCollectionNotifier()),

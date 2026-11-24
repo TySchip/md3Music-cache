@@ -65,6 +65,9 @@ android {
     lint {
         disable += listOf("AndroidGradlePluginVersion", "InvalidPackage", "GradleDependency", "NewerVersionAvailable")
     }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -105,4 +108,7 @@ dependencies {
     excludeLocalExoplayer("media3-exoplayer-smoothstreaming")
     // MD3Music fork: 蝰蛇母带 DSP 核心（ViperBiquad/ViperMasterChain）的 JVM 单元测试
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.16.1")
+    testImplementation("org.mockito:mockito-core:5.20.0")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
 }

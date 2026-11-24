@@ -6,11 +6,11 @@ void main() {
   test('仓库地址为唯一来源常量', () {
     expect(
       GithubReleaseClient.apiLatestUri.toString(),
-      'https://api.github.com/repos/zzyoxml/md3Music/releases/latest',
+      'https://api.github.com/repos/TySchip/md3Music-cache/releases/latest',
     );
     expect(
       GithubReleaseClient.htmlLatestUri.toString(),
-      'https://github.com/zzyoxml/md3Music/releases/latest',
+      'https://github.com/TySchip/md3Music-cache/releases/latest',
     );
     expect(GithubReleaseClient.userAgent, isNotEmpty);
   });

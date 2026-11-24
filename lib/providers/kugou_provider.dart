@@ -118,6 +118,11 @@ class KugouProvider extends ChangeNotifier {
 
   Future<void> _autoConnect() async {
     try {
+      // Restore the saved account before any network operation so offline libraries open.
+      if (await _apiClient.isLoggedInWhenReady()) {
+        _isLoggedIn = true;
+        notifyListeners();
+      }
       await _apiClient.registerDevice();
 
       if (_apiClient.isLoggedIn) {

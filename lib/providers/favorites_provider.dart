@@ -371,6 +371,10 @@ class FavoritesProvider extends ChangeNotifier {
           if (result == null) {
             // 同步失败：记录日志，可后续扩展为待同步队列
             debugPrint('[Favorites] 同步到服务器失败，song=${song.id}, listid=$listid');
+          } else {
+            // Let the offline cache re-read the authoritative list after the write settles.
+            invalidateCloudFavoriteSongs();
+            notifyListeners();
           }
         }).catchError((_) {});
       }

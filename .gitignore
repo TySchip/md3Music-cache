@@ -1,0 +1,22 @@
+# Flutter / Android local build state
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.packages
+android/.gradle/
+android/.kotlin/
+android/local.properties
+android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
+
+# Signing material stays local
+android/keystore.properties
+*.jks
+*.keystore
+
+# Local editor / operating system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

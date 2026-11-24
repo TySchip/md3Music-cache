@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dpad/dpad.dart';
@@ -21,6 +22,7 @@ import '../../core/utils/tab_snap_physics.dart';
 import '../../data/repositories/favorite_lists_cache.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../providers/favorites_provider.dart';
+import '../library/favorite_cache_page.dart';
 import '../../providers/player_provider.dart';
 import '../../providers/playlist_collection_notifier.dart';
 import '../../services/kugou_api/kugou_api_client.dart';
@@ -1027,6 +1029,13 @@ class _FavoritesPageState extends State<FavoritesPage>
             style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w600),
           ),
           actions: [
+            if (Platform.isAndroid && !_isManaging)
+              IconButton(
+                tooltip: '我喜欢 · 离线缓存', icon: const Icon(Icons.offline_pin_outlined),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const FavoriteCachePage(),
+                )),
+              ),
             // 新建歌单入口已移到「我创建的歌单」分组标题右侧，
             // 这里只在批量管理模式下保留删除按钮。
             if (_isManaging)

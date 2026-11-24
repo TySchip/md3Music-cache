@@ -1,10 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:io';
 import 'package:material_ui/material_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:m3e_core/m3e_core.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/build_flags.dart';
+import '../../core/services/favorite_audio_cache.dart';
+import '../library/favorite_cache_page.dart';
 import '../../core/layout/adaptive_navigator.dart';
 import '../../core/layout/responsive_layout.dart';
 import '../../core/theme/app_dimens.dart';
@@ -85,6 +88,28 @@ class PlaylistPage extends StatefulWidget {
 }
 
 class _PlaylistPageState extends State<PlaylistPage> {
+  FavoriteAudioCache? _favoriteCache;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (Platform.isAndroid && widget.isDefaultFavorite && _favoriteCache == null) {
+      _favoriteCache = context.read<FavoriteAudioCache>();
+      _favoriteCache!.addListener(_onFavoriteCacheChanged);
+      if (_favoriteCache!.songs.isNotEmpty) {
+        _songs = _favoriteCache!.displaySongs;
+        _invalidateDisplaySongs();
+      }
+    }
+  }
+
+  void _onFavoriteCacheChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (_favoriteCache!.songs.isNotEmpty) _songs = _favoriteCache!.displaySongs;
+      _invalidateDisplaySongs();
+    });
+  }
   bool _isLoading = true;
   List<Song> _songs = [];
   String? _error;
@@ -211,6 +236,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
 
   @override
   void dispose() {
+    _favoriteCache?.removeListener(_onFavoriteCacheChanged);
     PlaylistPage.songFilterListenable?.removeListener(_onFilterChanged);
     _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
@@ -353,6 +379,9 @@ class _PlaylistPageState extends State<PlaylistPage> {
 
   /// 应用可选扩展注入的列表变换（如按本地持久化筛选；每次调用重新执行）。
   List<Song> _applyDisplayFilter(List<Song> list) {
+    if (widget.isDefaultFavorite && (_favoriteCache?.onlyCached ?? false)) {
+      list = list.where((song) => _favoriteCache!.isComplete(song.id)).toList();
+    }
     final filter = PlaylistPage.songFilterHook;
     return filter == null ? list : filter('playlist', list);
   }
@@ -545,6 +574,10 @@ class _PlaylistPageState extends State<PlaylistPage> {
           : Colors.transparent,
       child: SongListItem(
         song: song,
+        subtitleOverride: _favoriteCache == null ? null : Text(
+          '${song.artist} · ${_favoriteCache!.label(song.id)}',
+          maxLines: 1, overflow: TextOverflow.ellipsis,
+        ),
         isSelectMode: _isMultiSelectMode,
         isSelected: isSelected,
         onMoreTap: () {},
@@ -1151,6 +1184,7 @@ class _PlaylistPageState extends State<PlaylistPage> {
   }
 
   Future<void> _fetchSongs() async {
+    if (widget.isDefaultFavorite) _favoriteCache?.requestSync();
     setState(() {
       _isLoading = true;
       _error = null;
@@ -1668,6 +1702,19 @@ class _PlaylistPageState extends State<PlaylistPage> {
       surfaceTintColor: Colors.transparent,
       scrolledUnderElevation: 0,
       actions: [
+        if (_favoriteCache != null) ...[
+          IconButton(
+            tooltip: '仅显示已缓存',
+            icon: Icon((_favoriteCache!.onlyCached) ? Icons.offline_pin : Icons.offline_pin_outlined),
+            onPressed: _favoriteCache!.toggleOnlyCached,
+          ),
+          IconButton(
+            tooltip: '管理我喜欢的缓存', icon: const Icon(Icons.storage_outlined),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const FavoriteCachePage(),
+            )),
+          ),
+        ],
         // 可选扩展：宿主注入的额外操作按钮（默认无）
         ...?PlaylistPage.extraAppBarActionsBuilder?.call(context),
         if (showTrackOrder)

@@ -114,7 +114,7 @@ android {
         // CI 的原子随身听兼容包只覆盖 applicationId；namespace、Kotlin 包路径和
         // MethodChannel 名保持不变，避免复制或改写原生代码。
         applicationId = providers.gradleProperty("md3ApplicationId")
-            .getOrElse("com.md3music.md3music")
+            .getOrElse("com.md3music.md3music.offline")
         minSdk = flutter.minSdkVersion
         targetSdk = 35
         versionCode = flutter.versionCode

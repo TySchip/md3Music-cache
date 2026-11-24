@@ -907,7 +907,13 @@ public class AudioPlayer implements MethodCallHandler, Player.Listener, Metadata
             // 映射进 MediaItem.mediaMetadata（原实现只 setTag(id)，mediaMetadata 为空），
             // 使媒体会话（Lyricon autoSync / SystemUI 通知栏）能读到封面 artUri。
             applyPlayerTag(mediaItemBuilder, map.get("tag"));
-            return new ProgressiveMediaSource.Factory(buildDataSourceFactory(mapGet(map, "headers")), buildExtractorsFactory(mapGet(map, "options")))
+            Uri favoriteUri = Uri.parse((String)map.get("uri"));
+            String favoriteKey = FavoriteAudioCache.keyForUri(favoriteUri);
+            if (favoriteKey != null) mediaItemBuilder.setCustomCacheKey(favoriteKey);
+            DataSource.Factory favoriteSource = FavoriteAudioCache.playbackFactory(
+                    buildDataSourceFactory(mapGet(map, "headers")), favoriteKey,
+                    "md3cache".equals(favoriteUri.getScheme()));
+            return new ProgressiveMediaSource.Factory(favoriteSource, buildExtractorsFactory(mapGet(map, "options")))
                     .createMediaSource(mediaItemBuilder.build());
         case "dash":
             MediaItem.Builder dashItemBuilder = new MediaItem.Builder()

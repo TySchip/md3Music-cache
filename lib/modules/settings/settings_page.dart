@@ -15,6 +15,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../update/release_version.dart';
 import '../update/update_web_links.dart';
 import '../../core/services/usb_audio_service.dart';
+import '../library/favorite_cache_page.dart';
 import '../../core/services/accompany/accompany_source.dart';
 import '../../core/services/stem_separation_service.dart';
 import '../../core/services/windows_app_lifecycle.dart';
@@ -7021,6 +7022,15 @@ class _SettingsPageState extends State<SettingsPage>
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _buildGroupLabel('本地服务', colorScheme, first: true),
+        if (Platform.isAndroid)
+          ListTile(
+            leading: Icon(Icons.offline_pin, color: colorScheme.primary),
+            title: const Text('我喜欢 · 离线缓存'),
+            subtitle: const Text('Wi-Fi 自动缓存，最新收藏优先，上限 5GB'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const FavoriteCachePage(),
+            )),
+          ),
         // 原「在线音乐」页内容：本地 Rust 服务器状态与重启入口
         // search: 接口 本地服务器 api 在线音乐
         ListTile(
@@ -7257,7 +7267,7 @@ class _SettingsPageState extends State<SettingsPage>
                             ? '检查并下载 Windows 更新'
                             : '有新版 v$pendingVersion 可用，点击更新'))
                 : pendingVersion.isEmpty
-                ? 'https://github.com/zzyoxml/md3Music/releases'
+                ? 'https://github.com/TySchip/md3Music-cache/releases'
                 : '有新版 v$pendingVersion 可用，点击前往下载',
           ),
           leading: const Icon(Icons.system_update_outlined),
@@ -7403,7 +7413,7 @@ class _SettingsPageState extends State<SettingsPage>
   }
 
   Future<void> _openReleasesUrl() async {
-    const url = 'https://github.com/zzyoxml/md3Music/releases';
+    const url = 'https://github.com/TySchip/md3Music-cache/releases';
     final uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

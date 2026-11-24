@@ -22,6 +22,7 @@ public class JustAudioPlugin implements FlutterPlugin {
     public void onAttachedToEngine(@NonNull FlutterPluginBinding binding) {
         Context applicationContext = binding.getApplicationContext();
         BinaryMessenger messenger = binding.getBinaryMessenger();
+        FavoriteAudioCache.attach(applicationContext, messenger);
         methodCallHandler = new MainMethodCallHandler(applicationContext, messenger);
         // MD3Music fork（诊断·阶段6）：打印注册本插件的 FlutterEngine 身份，
         // 用于确认进程内存在几个引擎（每个引擎一份 just_audio，独立 AudioPlayer）。
@@ -46,6 +47,7 @@ public class JustAudioPlugin implements FlutterPlugin {
 
     @Override
     public void onDetachedFromEngine(@NonNull FlutterPluginBinding binding) {
+        FavoriteAudioCache.detach();
         methodCallHandler.dispose();
         methodCallHandler = null;
 

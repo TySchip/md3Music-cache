@@ -146,6 +146,31 @@ public class FavoriteAudioCacheTest {
         Field singleton = FavoriteAudioCache.class.getDeclaredField("instance"); singleton.setAccessible(true); singleton.set(null, null);
     }
 
+    @Test public void wifiBackedVpnIsSkippedForThePhysicalWifiNetwork() throws Exception {
+        NetworkCapabilities vpn = capabilities(NetworkCapabilities.TRANSPORT_WIFI);
+        shadowOf(vpn).addTransportType(NetworkCapabilities.TRANSPORT_VPN);
+        connectivity.setNetworkCapabilities(network, vpn);
+        Network physical = ShadowNetwork.newInstance(124);
+        connectivity.addNetwork(physical, org.robolectric.shadows.ShadowNetworkInfo.newInstance(
+                android.net.NetworkInfo.DetailedState.CONNECTED, ConnectivityManager.TYPE_WIFI, 0, true, true));
+        connectivity.setNetworkCapabilities(physical, capabilities(NetworkCapabilities.TRANSPORT_WIFI));
+        assertEquals(physical, invoke("wifi", new Class<?>[0]));
+        manager.connectionFactory = (selected, address) -> {
+            assertEquals(physical, selected);
+            return (HttpURLConnection)address.openConnection();
+        };
+        download(key(1), List.of(key(1)));
+        assertEquals(payload.length, transferred.get());
+    }
+
+    @Test public void wifiBackedVpnAloneDoesNotEnableCacheRequests() throws Exception {
+        NetworkCapabilities vpn = capabilities(NetworkCapabilities.TRANSPORT_WIFI);
+        shadowOf(vpn).addTransportType(NetworkCapabilities.TRANSPORT_VPN);
+        connectivity.setNetworkCapabilities(network, vpn);
+        assertEquals(false, status().get("wifi"));
+        assertEquals(0, server.getRequestCount());
+    }
+
     @Test public void fullCacheSeeksOfflineAndDoesNotRequestTheServerAgain() throws Exception {
         download(key(1), List.of(key(1)));
         assertEquals(payload.length, transferred.get());

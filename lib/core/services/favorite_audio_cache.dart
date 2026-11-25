@@ -194,9 +194,16 @@ Future<List<Song>> fetchFavoriteCacheSnapshot(KugouApiClient api) async {
   if (info is! List) throw StateError('收藏列表不完整');
   KugouPlaylistBrief? favorite;
   for (final raw in info) {
-    if (raw is Map && ('${raw['is_def']}' == '2' || raw['name'] == '我喜欢')) {
-      favorite = KugouPlaylistBrief.fromJson(Map<String, dynamic>.from(raw));
-      break;
+    if (raw is Map) {
+      final candidate = KugouPlaylistBrief.fromJson(
+        Map<String, dynamic>.from(raw),
+      );
+      if (candidate.type != 0 || candidate.source == 2) continue;
+      if (candidate.name == '我喜欢') {
+        favorite = candidate;
+        break;
+      }
+      if ('${raw['is_def']}' == '2') favorite ??= candidate;
     }
   }
   if (favorite == null || favorite.listId.isEmpty) throw StateError('未找到我喜欢歌单');

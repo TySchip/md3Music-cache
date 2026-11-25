@@ -231,6 +231,7 @@ public final class FavoriteAudioCache {
         for (Network network : connectivity.getAllNetworks()) {
             NetworkCapabilities caps = connectivity.getNetworkCapabilities(network);
             if (caps != null && caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+                    && !caps.hasTransport(NetworkCapabilities.TRANSPORT_VPN)
                     && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                     && caps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)) return network;
         }

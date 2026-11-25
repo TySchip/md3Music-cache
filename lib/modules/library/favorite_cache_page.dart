@@ -102,8 +102,12 @@ class FavoriteCachePage extends StatelessWidget {
               ],
             ),
           ),
-          if (cache.activeKey != null)
-            LinearProgressIndicator(value: cache.progress.clamp(0, 1)),
+          SizedBox(
+            height: 4,
+            child: cache.activeKey == null
+                ? null
+                : LinearProgressIndicator(value: cache.progress.clamp(0, 1)),
+          ),
           if (cache.error != null)
             Padding(
               padding: const EdgeInsets.all(12),

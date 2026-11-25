@@ -8,9 +8,9 @@
 
 <p>🎵 只缓存「我喜欢」 · 📶 Wi-Fi 自动补全 · ✈️ 无网也能听</p>
 
-[![Android](https://img.shields.io/badge/Android-arm64--v8a-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.1) [![Base](https://img.shields.io/badge/Upstream-v6.4.1-38BDF8?style=flat-square)](https://github.com/zzyoxml/md3Music/tree/3709b4b3286b78f5e6f176cc37d0f610b0c4c00d) [![Cache](https://img.shields.io/badge/Auto_Cache-5_GB-38BDF8?style=flat-square)](CACHE_BUILD.md) [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
+[![Android](https://img.shields.io/badge/Android-arm64--v8a-3DDC84?style=flat-square&logo=android&logoColor=white)](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.2) [![Base](https://img.shields.io/badge/Upstream-v6.4.1-38BDF8?style=flat-square)](https://github.com/zzyoxml/md3Music/tree/3709b4b3286b78f5e6f176cc37d0f610b0c4c00d) [![Cache](https://img.shields.io/badge/Auto_Cache-5_GB-38BDF8?style=flat-square)](CACHE_BUILD.md) [![License](https://img.shields.io/badge/License-AGPL--3.0-blue?style=flat-square)](LICENSE)
 
-**[⬇ 下载 Android APK](https://github.com/TySchip/md3Music-cache/releases/download/v6.4.1-cache.1/MD3Music-6.4.1-cache-arm64.apk)** · **[📦 全部附件](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.1)** · **[🛠 使用与构建](CACHE_BUILD.md)**
+**[⬇ 下载 Android APK](https://github.com/TySchip/md3Music-cache/releases/download/v6.4.1-cache.2/MD3Music-6.4.1-cache.2-arm64.apk)** · **[📦 全部附件](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.2)** · **[🛠 使用与构建](CACHE_BUILD.md)**
 
 </div>
 
@@ -20,13 +20,13 @@
 
 这是独立维护的修改版。保留原项目 Material 3 / Apple Music 风格界面，本次发布提供 **arm64 标准版（lite）**。标准版不包含上游 full 版的 3D 封面和端侧人声分离模型。
 
-> **当前为预发布版本。** 自动化测试、真实本地 HTTP 字节传输测试和 APK 构建已验证；真实安卓手机、云端账号、锁屏持续缓存及音频输出仍需验收。详见 [验证记录](CACHE_VALIDATION.md)。
+> **当前为预发布版本。** `cache.2` 修复 VPN 分流场景下无法缓存、同名收藏歌单选择和进度条引发的列表跳动。已在 Redmi K70 Ultra / Android 14 上观察到无需播放即可缓存、已用空间持续增长和多首完整状态。长时间锁屏、写满容量及离线冷启动仍需进一步验收，详见 [验证记录](CACHE_VALIDATION.md)。
 
 ## 📦 缓存规则
 
 | 项目 | 行为 |
 | --- | --- |
-| 缓存范围 | 完整云端「我喜欢」，无需先播放，按账号隔离 |
+| 缓存范围 | 完整云端「我喜欢」，无需先播放，按账号隔离；同账号存在「默认收藏」与「我喜欢」时优先后者 |
 | 填充顺序 | 收藏加入顺序从新到旧；界面排序、播放次数和最近播放时间不影响保留顺序 |
 | 容量 | 默认 **5 GB = 5,000,000,000 字节**，按实际音频、未完成片段和已保存封面计量；整首保存，允许少量余量 |
 | 新增喜欢 | 新歌优先；空间不足时移除足够数量的最旧本地缓存，不取消歌曲的喜欢 |
@@ -41,7 +41,7 @@
 
 ## 🚀 安装与使用
 
-1. 从 [Release](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.1) 下载 `MD3Music-6.4.1-cache-arm64.apk`，在支持 arm64 的 Android 7.0 及以上设备安装。
+1. 从 [Release](https://github.com/TySchip/md3Music-cache/releases/tag/v6.4.1-cache.2) 下载 `MD3Music-6.4.1-cache.2-arm64.apk`，在支持 arm64 的 Android 7.0 及以上设备安装。
 2. 应用名称为 **MD3Music 缓存版**，包名为 `com.md3music.md3music.offline`，可与原版并存。首次使用需要重新登录。
 3. 连接 Wi-Fi，进入「我的收藏」右上角缓存图标，或「设置 → 缓存与数据 → 我喜欢 · 离线缓存」。默认开启自动缓存，默认容量 5 GB。
 4. 等待歌曲标为「已缓存」。断网时打开「仅显示已缓存」即可浏览和连续播放。
